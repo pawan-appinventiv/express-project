@@ -1,5 +1,7 @@
-import { Pool } from "pg";
-import { env } from "./env";
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { Pool } from 'pg';
+import { env } from './env';
 
 /**
  * One shared connection pool for the whole app. Import pool and call
@@ -17,16 +19,20 @@ export const pool = new Pool({
 });
 
 // An idle client erroring (e.g. Postgres restarted) must not crash the process.
-pool.on("error", (err) => {
-  console.error("Unexpected PostgreSQL pool error:", err);
+pool.on('error', (err) => {
+  console.error('Unexpected PostgreSQL pool error:', err);
 });
 
 /** Verifies the database is reachable. Called once at startup. */
 export const connectDB = async (): Promise<void> => {
-  await pool.query("SELECT 1");
-  console.log(
-    `Connected to PostgreSQL ${env.DB_USER}@${env.DB_HOST}:${env.DB_PORT}/${env.DB_NAME}`,
-  );
+  await pool.query('SELECT 1');
+  console.log(`Connected to PostgreSQL ${env.DB_USER}@${env.DB_HOST}:${env.DB_PORT}/${env.DB_NAME}`);
+};
+
+/** Applies db/schema.sql. Safe to run more than once. */
+export const initSchema = async (): Promise<void> => {
+  const sql = readFileSync(join(process.cwd(), 'db/schema.sql'), 'utf8');
+  await pool.query(sql);
 };
 
 export const closeDB = (): Promise<void> => pool.end();
