@@ -1,9 +1,10 @@
 import app from './app';
-import { connectDB } from './config/db';
+import { connectDB, initSchema } from './config/db';
 import { env } from './config/env';
 
 const start = async (): Promise<void> => {
   await connectDB();
+  await initSchema();
   app.listen(env.PORT, () => {
     console.log(`Server running on http://localhost:${env.PORT}`);
   });
